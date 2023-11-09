@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 from aux_file import priority_directions
 
 ## importa classes
@@ -13,6 +14,8 @@ def main(data_folder_name):
     # Set the path to config files and data files for the environment
     current_folder = os.path.abspath(os.getcwd())
     data_folder = os.path.abspath(os.path.join(current_folder, data_folder_name))
+
+    all_victims = {}
 
     # Instantiate the environment
     env = Env(data_folder)
@@ -35,9 +38,24 @@ def main(data_folder_name):
     exp3 = ExplorerRobot(env, explorer_file_3, priority_directions[2])
     exp4 = ExplorerRobot(env, explorer_file_4, priority_directions[3])
 
+
     # Run the environment simulator
     env.run()
 
+    for id, data in exp1.victims.items():
+        all_victims[id] = data
+
+    for id, data in exp2.victims.items():
+        all_victims[id] = data
+
+    for id, data in exp3.victims.items():
+        all_victims[id] = data
+
+    for id, data in exp4.victims.items():
+        all_victims[id] = data
+    
+    for id, data in all_victims.items():
+        print(f"id: {id}, pulse: {data.pulse}")
 
 if __name__ == '__main__':
     """ To get data from a different folder than the default called data
