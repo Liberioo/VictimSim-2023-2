@@ -11,6 +11,7 @@ from rescuer import Rescuer
 import pickle
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pandas as pd
+from sklearn.cluster import KMeans
 
 def main(data_folder_name):
     # Set the path to config files and data files for the environment
@@ -50,7 +51,7 @@ def main(data_folder_name):
     pos_array = []
 
 
-    filename = "arvore.pkl"
+    filename = "tree.pkl"
     arvore = pickle.load(open(filename, 'rb'))
 
     for id, data in exp1.victims.items():
@@ -75,18 +76,44 @@ def main(data_folder_name):
 
         new_row = {'id': data.id, 'qPA': data.qPA, 'pulso': data.pulse, 'freq_resp': data.resp}
         df = df.append(new_row, ignore_index=True)
+
+    df['id'] = df['id'].astype(int)
+
     print(type(all_victims))
     print(df.head())
     df['classe'] = arvore.predict(df)
     df['grav'] = 0
-    #df['x'] = posistions_array_x  caso você queira as posicoes no df em x,y ao inves de tuple
-    #df['y'] = posistions_array_y   é só desfazer esses comentários
     df['pos'] = pos_array
+    df['x'] = posistions_array_x
+    df['y'] = posistions_array_y
 
-    clean = ["id", "pos", "grav", "classe"] # eai aqui trocar "pos" por "x", "y"
+    clean = ["id", "x","y", "grav", "classe"]
     clean_df = df[clean]
+    salvos = clean_df.sample(frac = 0.4)
     print(clean_df.head())
     clean_df.to_csv('resultados.csv', index=False)
+    salvos.to_csv('salvos.txt', index = False)
+
+    model = KMeans(n_clusters = 4, n_init = 10)
+    model.fit(pos_array)
+    predict = model.predict(pos_array)
+    clusterizado = clean_df
+    clusterizado['cluster'] = predict
+
+    mask = clusterizado['cluster'] == 0
+    cluster1 = clusterizado[mask]
+    cluster2 = clusterizado[clusterizado['cluster'] == 1]
+    cluster3 = clusterizado[clusterizado['cluster'] == 2]
+    cluster4 = clusterizado[clusterizado['cluster'] == 3]
+
+    cluster1.to_csv('cluster1.txt', index=False)
+    cluster2.to_csv('cluster2.txt', index=False)
+    cluster3.to_csv('cluster3.txt', index=False)
+    cluster4.to_csv('cluster4.txt', index=False)
+
+
+    print(clean_df.head())
+
 
 
     #print(df.head())
@@ -108,7 +135,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         data_folder_name = sys.argv[1]
     else:
-        # data_folder_name = os.path.join("datasets", "data_100x80_132vic")
-        data_folder_name = os.path.join("datasets", "data_20x20_42vic")
+        #data_folder_name = os.path.join("datasets", "data_100x80_132vic")
+        data_folder_name = os.path.join("datasets", "teste_cego")
 
     main(data_folder_name)
