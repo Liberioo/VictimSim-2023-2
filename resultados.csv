@@ -1,0 +1,37 @@
+id,pos,grav,classe
+40.0,"(0, -2)",0,Instável
+22.0,"(1, -4)",0,Instável
+18.0,"(3, -3)",0,Crítico
+15.0,"(2, 5)",0,Crítico
+31.0,"(3, 0)",0,Potencialmente estável
+41.0,"(4, 3)",0,Estável
+8.0,"(4, 2)",0,Instável
+25.0,"(6, 2)",0,Estável
+21.0,"(6, 4)",0,Crítico
+5.0,"(6, 8)",0,Instável
+24.0,"(6, 9)",0,Instável
+32.0,"(6, 11)",0,Instável
+17.0,"(6, 12)",0,Instável
+14.0,"(7, 6)",0,Instável
+7.0,"(8, -5)",0,Potencialmente estável
+2.0,"(8, 10)",0,Estável
+11.0,"(4, 14)",0,Estável
+35.0,"(3, 14)",0,Instável
+3.0,"(3, 11)",0,Instável
+4.0,"(3, 8)",0,Instável
+33.0,"(2, 8)",0,Instável
+19.0,"(1, 11)",0,Crítico
+13.0,"(0, 7)",0,Estável
+9.0,"(0, 6)",0,Potencialmente estável
+26.0,"(0, 4)",0,Instável
+37.0,"(0, 8)",0,Potencialmente estável
+12.0,"(-3, -2)",0,Potencialmente estável
+0.0,"(-3, -3)",0,Instável
+23.0,"(-2, -1)",0,Instável
+1.0,"(-3, 2)",0,Potencialmente estável
+29.0,"(-6, 0)",0,Potencialmente estável
+27.0,"(-10, -2)",0,Potencialmente estável
+36.0,"(-9, -2)",0,Instável
+34.0,"(-5, -2)",0,Potencialmente estável
+28.0,"(-10, 0)",0,Estável
+20.0,"(-7, 4)",0,Instável
