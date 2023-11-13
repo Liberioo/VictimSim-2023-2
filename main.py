@@ -32,7 +32,7 @@ def main(data_folder_name):
     explorer_file_4 = os.path.join(data_folder, "explorer_config_q4.txt")
 
     # Instantiate agents rescuer and explorer
-    resc = Rescuer(env, rescuer_file)
+    #resc = Rescuer(env, rescuer_file)
 
     # Explorer needs to know rescuer to send the map
     # that's why rescuer is instatiated before
@@ -45,14 +45,12 @@ def main(data_folder_name):
     # Run the environment simulator
     env.run()
 
-    df = pd.DataFrame(columns=['id', 'qPA', 'pulso', 'freq_resp'])
-    posistions_array_x = []
-    posistions_array_y = []
-    pos_array = []
+    resc1 = Rescuer(env,explorer_file_1)
 
 
-    filename = "tree.pkl"
-    arvore = pickle.load(open(filename, 'rb'))
+
+    #filename = "tree.pkl"
+    #arvore = pickle.load(open(filename, 'rb'))
 
     for id, data in exp1.victims.items():
         all_victims[id] = data
@@ -66,68 +64,54 @@ def main(data_folder_name):
 
     for id, data in exp4.victims.items():
         all_victims[id] = data
-    
-    for id, data in all_victims.items():
-        print(f"id: {id}, qpa: {data.qPA}, pulse: {data.pulse}, resp: {data.resp}")
 
-        pos_array.append(data.pos)
-        posistions_array_x.append(data.pos[0])
-        posistions_array_y.append(data.pos[1])
-
-        new_row = {'id': data.id, 'qPA': data.qPA, 'pulso': data.pulse, 'freq_resp': data.resp}
-        df = df.append(new_row, ignore_index=True)
-
-    df['id'] = df['id'].astype(int)
-
-    print(type(all_victims))
-    print(df.head())
-    df['classe'] = arvore.predict(df)
-    df['grav'] = 0
-    df['pos'] = pos_array
-    df['x'] = posistions_array_x
-    df['y'] = posistions_array_y
-
-    clean = ["id", "x","y", "grav", "classe"]
-    clean_df = df[clean]
-    salvos = clean_df.sample(frac = 0.4)
-    print(clean_df.head())
-    clean_df.to_csv('resultados.csv', index=False)
-    salvos.to_csv('salvos.txt', index = False)
-
-    model = KMeans(n_clusters = 4, n_init = 10)
-    model.fit(pos_array)
-    predict = model.predict(pos_array)
-    clusterizado = clean_df
-    clusterizado['cluster'] = predict
-
-    mask = clusterizado['cluster'] == 0
-    cluster1 = clusterizado[mask]
-    cluster2 = clusterizado[clusterizado['cluster'] == 1]
-    cluster3 = clusterizado[clusterizado['cluster'] == 2]
-    cluster4 = clusterizado[clusterizado['cluster'] == 3]
-
-    cluster1.to_csv('cluster1.txt', index=False)
-    cluster2.to_csv('cluster2.txt', index=False)
-    cluster3.to_csv('cluster3.txt', index=False)
-    cluster4.to_csv('cluster4.txt', index=False)
+    resc1.learn()
+    resc1.classificate(all_victims)
 
 
-    print(clean_df.head())
+    #for id, data in all_victims.items():
+        #print(f"id: {id}, qpa: {data.qPA}, pulse: {data.pulse}, resp: {data.resp}")
+
+        #new_row = {'id': data.id, 'qPA': data.qPA, 'pulso': data.pulse, 'freq_resp': data.resp}
+        #df = df.append(new_row, ignore_index=True)
+
+
+    # df['id'] = df['id'].astype(int)
+    #
+    # print(type(all_victims))
+    # print(df.head())
+    # #df['classe'] = arvore.predict(df)
+    # df['grav'] = 0
+    # df['pos'] = pos_array
+    # df['x'] = posistions_array_x
+    # df['y'] = posistions_array_y
+
+    # clean = ["id", "x","y", "grav", "classe"]
+    # clean_df = df[clean]
+    # salvos = clean_df.sample(frac = 0.8)
+    # print(clean_df.head())
+    # clean_df.to_csv('resultados.csv', index=False)
+    # salvos.to_csv('file_predict.txt', index = False)
+
+    # model = KMeans(n_clusters = 4, n_init = 10)
+    # model.fit(pos_array)
+    # predict = model.predict(pos_array)
+    # clusterizado = clean_df
+    # clusterizado['cluster'] = predict
+    #
+    # mask = clusterizado['cluster'] == 0
+    # cluster1 = clusterizado[mask]
+    # cluster2 = clusterizado[clusterizado['cluster'] == 1]
+    # cluster3 = clusterizado[clusterizado['cluster'] == 2]
+    # cluster4 = clusterizado[clusterizado['cluster'] == 3]
+    #
+    # cluster1.to_csv('cluster1.txt', index=False)
+    # cluster2.to_csv('cluster2.txt', index=False)
+    # cluster3.to_csv('cluster3.txt', index=False)
+    # cluster4.to_csv('cluster4.txt', index=False)
 
 
 
-    #print(df.head())
-
-
-
-
-
-    #df = pd.DataFrame(all_victims)
-    #df = df.T
-    #print(df.head())
-    #filename = "arvore.pkl"
-    #arvere = pickle.load(open(filename, 'rb'))
-    #print(all_victims)
 if __name__ == '__main__':
     """ To get data from a different folder than the default called data
     pass it by the argument line"""
