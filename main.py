@@ -79,6 +79,7 @@ def main(data_folder_name):
 
     resc1.learn()
     resc1.classificate(all_victims)
+    weighted_pos = resc1.create_weighted_array()
 
     def plot_centroids(data, km):
         y_km = km.fit_predict(data)

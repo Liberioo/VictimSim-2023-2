@@ -202,9 +202,11 @@ class Rescuer(AbstractAgent):
     def create_weighted_array(self):
         df = pd.read_csv('dataframe.csv')
         positions_list = []
+        weight_mapping = {1: 4, 2: 3, 3: 2, 4: 1}
 
+        df['peso'] = df['classe'].map(weight_mapping)
         for index, row in df.iterrows():
-            positions_list.extend([row['pos']] * row['classe'])
+            positions_list.extend([row['pos']] * row['peso'])
 
         positions_array = np.array(positions_list)
         return positions_array
