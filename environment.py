@@ -4,13 +4,10 @@
 import csv
 import os
 import time
-from math import ceil
 
 import numpy as np
 import pygame
-from kneed import KneeLocator
-from matplotlib import pyplot as plt
-from sklearn.cluster import KMeans
+
 
 from physical_agent import PhysAgent
 
@@ -368,38 +365,3 @@ class Env:
         self.__print_victims(total_victims, "found", "")
         return np.array(all_victims_pos)
 
-    @staticmethod
-    def find_elbow(data):
-        inertia_values = []
-        for k in range(1, ceil(len(data) / 2)):
-            km = KMeans(n_clusters=k, n_init=10)
-            km.fit(data)
-            inertia_values.append(km.inertia_)
-
-        kn = KneeLocator(range(1, len(inertia_values) + 1), inertia_values, curve='convex', direction='decreasing')
-        if kn.knee is None:
-            return 3
-        return kn.knee
-
-    @staticmethod
-    def plot_centroids(data, km):
-        y_km = km.fit_predict(data)
-        color_array = ['lightblue', 'lightgreen', 'orange', 'yellow', 'pink', 'blue', 'green']
-        for i in range(len(km.cluster_centers_)):
-            plt.scatter(
-                data[y_km == i, 0], data[y_km == i, 1],
-                s=50, c=color_array[i],
-                marker='s', edgecolor='black',
-                label=f'cluster {i + 1}'
-            )
-
-        # plot the centroids
-        plt.scatter(
-            km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
-            s=250, marker='*',
-            c='red', edgecolor='black',
-            label='centroids'
-        )
-        plt.legend(scatterpoints=1)
-        plt.grid()
-        plt.show()

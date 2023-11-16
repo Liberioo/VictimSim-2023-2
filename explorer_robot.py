@@ -3,7 +3,6 @@ import random
 import networkx as nx
 import numpy as np
 
-
 from abstract_agent import AbstractAgent
 from aux_file import Direction, DIRECTIONS
 from physical_agent import PhysAgent
@@ -11,9 +10,10 @@ from victim import Victim
 
 
 class ExplorerRobot(AbstractAgent):
-    def __init__(self, env, config_file, priority_directions):
+    def __init__(self, env, config_file, priority_directions, rescue_organizer):
         super().__init__(env, config_file)
 
+        self.rescue_organizer = rescue_organizer
         self.graph = nx.Graph()
         self.pos = (0, 0)
         self.victims = {}
@@ -58,7 +58,6 @@ class ExplorerRobot(AbstractAgent):
             return Direction.SE
         elif (dx, dy) == Direction.SW.value:
             return Direction.NE
-
 
     def add_position_to_map(self, direction: Direction, tile_type: int) -> None:
         x, y = self.position_shift(direction, self.pos[0], self.pos[1])
@@ -155,6 +154,7 @@ class ExplorerRobot(AbstractAgent):
         while self.get_cost_from_matrix(self.current_matrix_pos) != 0:
             dx, dy = self.find_matrix_lowest()
             self.move(dx, dy)
+        print("VOLTEI")
 
     def get_cost_from_matrix(self, matrix_position, dx=0, dy=0):
         return self.cost_matrix[matrix_position[0] + dy][matrix_position[1] + dx]
@@ -185,23 +185,23 @@ class ExplorerRobot(AbstractAgent):
             multiplier = 9
 
         if direction.name == priority_list[0]:
-            return 8*multiplier
+            return 8 * multiplier
         if direction.name == priority_list[1]:
-            return 7*multiplier
+            return 7 * multiplier
         if direction.name == priority_list[2]:
-            return 6*multiplier
+            return 6 * multiplier
         if direction.name == priority_list[3]:
-            return 5*multiplier
+            return 5 * multiplier
         if direction.name == priority_list[4]:
-            return 4*multiplier
+            return 4 * multiplier
         if direction.name == priority_list[5]:
-            return 3*multiplier
+            return 3 * multiplier
         if direction.name == priority_list[6]:
-            return 2*multiplier
+            return 2 * multiplier
         if direction.name == priority_list[7]:
-            return 1*multiplier
+            return 1 * multiplier
         else:
-            return 1*multiplier
+            return 1 * multiplier
 
     def order_paths(self) -> None:
         directions = self.path_not_tested[self.pos].copy()
@@ -243,15 +243,17 @@ class ExplorerRobot(AbstractAgent):
             cost = self.get_cost_from_matrix(self.current_matrix_pos)
             if cost < time_left:
                 vital_signs = self.body.read_vital_signals(victim_id)
-               
-                victim = Victim(id=victim_id, pos=self.pos, pSist=vital_signs[1], pDiast=vital_signs[2], qPA=vital_signs[3], pulse=vital_signs[4], resp=vital_signs[5], grav=vital_signs[6], classif=vital_signs[7])
 
-                new_victim = {victim.id : victim}
+                victim = Victim(id=victim_id, pos=self.pos, pSist=vital_signs[1], pDiast=vital_signs[2],
+                                qPA=vital_signs[3], pulse=vital_signs[4], resp=vital_signs[5], grav=vital_signs[6],
+                                classif=vital_signs[7])
+
+                new_victim = {victim.id: victim}
                 self.victims.update(new_victim)
-                    
 
     def deliberate(self) -> bool:
         if self.pos == (0, 0) and self.body.rtime < 2 * min(self.COST_LINE, self.COST_DIAG):
+            self.rescue_organizer.update_finished_explorers(self.victims)
             return False
 
         self.read_nearby_tiles()
@@ -260,6 +262,7 @@ class ExplorerRobot(AbstractAgent):
 
         if self.body.rtime <= self.get_cost_from_matrix(self.current_matrix_pos) + 3:
             self.get_back_to_base()
+            self.rescue_organizer.update_finished_explorers(self.victims, self.cost_matrix)
             return False
         elif len(self.path_not_tested[self.pos]) == 0:
             self.move_backtrack()

@@ -94,6 +94,7 @@ class PhysAgent:
             self.env.visited[new_x][new_y] = self.mind.TRACE_COLOR
             return PhysAgent.EXECUTED
         else:
+            print("BATEU NA PAREDE")
             return PhysAgent.BUMPED
 
     def check_obstacles(self):
