@@ -129,6 +129,7 @@ class Rescuer(AbstractAgent):
         for id, data in victims.items():
             #print(f"id: {id}, qpa: {data.qPA}, pulse: {data.pulse}, resp: {data.resp}")
             pos_array.append(data.pos)
+
             posistions_array_x.append(data.pos[0])
             posistions_array_y.append(data.pos[1])
 
@@ -142,6 +143,7 @@ class Rescuer(AbstractAgent):
         df['pos'] = pos_array
         df['x'] = posistions_array_x
         df['y'] = posistions_array_y
+        df.to_csv('dataframe.csv', index=False)
         clean = ["id", "x", "y", "grav", "classe"]
         clean_df = df[clean]
         clean_df.to_csv('file_predict.txt', index=False)
@@ -172,6 +174,7 @@ class Rescuer(AbstractAgent):
 
 
 
+
         self.tree.fit(x_train, y_train)
         y_pred2 = self.tree.predict(x_test)
         accuracy = accuracy_score(y_test, y_pred2)
@@ -196,6 +199,15 @@ class Rescuer(AbstractAgent):
 
         # Plot a simple bar chart
         # feature_importances.plot.bar()
+    def create_weighted_array(self):
+        df = pd.read_csv('dataframe.csv')
+        positions_list = []
+
+        for index, row in df.iterrows():
+            positions_list.extend([row['pos']] * row['classe'])
+
+        positions_array = np.array(positions_list)
+        return positions_array
     
     def __planner(self):
         """ A private method that calculates the walk actions to rescue the
