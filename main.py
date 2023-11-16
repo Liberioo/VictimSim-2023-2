@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 
 from aux_file import priority_directions
 
@@ -12,6 +13,7 @@ import pickle
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pandas as pd
 from sklearn.cluster import KMeans
+from matplotlib import pyplot as plt
 
 def main(data_folder_name):
     # Set the path to config files and data files for the environment
@@ -19,6 +21,7 @@ def main(data_folder_name):
     data_folder = os.path.abspath(os.path.join(current_folder, data_folder_name))
 
     all_victims = {}
+    all_victims_pos = []
 
     # Instantiate the environment
     env = Env(data_folder)
@@ -30,6 +33,8 @@ def main(data_folder_name):
     explorer_file_2 = os.path.join(data_folder, "explorer_config_q2.txt")
     explorer_file_3 = os.path.join(data_folder, "explorer_config_q3.txt")
     explorer_file_4 = os.path.join(data_folder, "explorer_config_q4.txt")
+
+    rescuer_config = os.path.join(data_folder, "rescuer_config.txt")
 
     # Instantiate agents rescuer and explorer
     #resc = Rescuer(env, rescuer_file)
@@ -45,8 +50,10 @@ def main(data_folder_name):
     # Run the environment simulator
     env.run()
 
-    resc1 = Rescuer(env,explorer_file_1)
-
+    resc1 = Rescuer(env, rescuer_config)
+    resc2 = Rescuer(env, rescuer_config)
+    resc3 = Rescuer(env, rescuer_config)
+    resc4 = Rescuer(env, rescuer_config)
 
 
     #filename = "tree.pkl"
@@ -54,63 +61,79 @@ def main(data_folder_name):
 
     for id, data in exp1.victims.items():
         all_victims[id] = data
-        print(data.resp)
+        all_victims_pos.append(data.pos)
 
     for id, data in exp2.victims.items():
         all_victims[id] = data
+        all_victims_pos.append(data.pos)
 
     for id, data in exp3.victims.items():
         all_victims[id] = data
+        all_victims_pos.append(data.pos)
 
     for id, data in exp4.victims.items():
         all_victims[id] = data
+        all_victims_pos.append(data.pos)
+
+    all_victims_pos = np.array(all_victims_pos)
 
     resc1.learn()
     resc1.classificate(all_victims)
 
+    def plot_centroids(data, km):
+        y_km = km.fit_predict(data)
+        color_array = ['lightblue', 'lightgreen', 'orange', 'yellow']
+        for i in range(len(km.cluster_centers_)):
+            plt.scatter(
+                data[y_km == i, 0], data[y_km == i, 1],
+                s=50, c=color_array[i],
+                marker='s', edgecolor='black',
+                label=f'cluster {i + 1}'
+            )
 
-    #for id, data in all_victims.items():
-        #print(f"id: {id}, qpa: {data.qPA}, pulse: {data.pulse}, resp: {data.resp}")
+        # plot the centroids
+        plt.scatter(
+            km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
+            s=250, marker='*',
+            c='red', edgecolor='black',
+            label='centroids'
+        )
+        plt.legend(scatterpoints=1)
+        plt.grid()
+        plt.show()
 
-        #new_row = {'id': data.id, 'qPA': data.qPA, 'pulso': data.pulse, 'freq_resp': data.resp}
-        #df = df.append(new_row, ignore_index=True)
+    km = KMeans(n_clusters=4, n_init=10)
+    km.fit(all_victims_pos)
+    plot_centroids(all_victims_pos, km)
 
+    def get_id_from_pos(vict_dict, pos):
+        for k, v in vict_dict.items():
+            if v.pos[0] == pos[0] and v.pos[1] == pos[1]:
+                return k
+        return None
 
-    # df['id'] = df['id'].astype(int)
-    #
-    # print(type(all_victims))
-    # print(df.head())
-    # #df['classe'] = arvore.predict(df)
-    # df['grav'] = 0
-    # df['pos'] = pos_array
-    # df['x'] = posistions_array_x
-    # df['y'] = posistions_array_y
+    cluster1 = {}
+    cluster2 = {}
+    cluster3 = {}
+    cluster4 = {}
 
-    # clean = ["id", "x","y", "grav", "classe"]
-    # clean_df = df[clean]
-    # salvos = clean_df.sample(frac = 0.8)
-    # print(clean_df.head())
-    # clean_df.to_csv('resultados.csv', index=False)
-    # salvos.to_csv('file_predict.txt', index = False)
+    for pos in all_victims_pos[np.where(km.labels_ == 0)[0]]:
+        cluster1[get_id_from_pos(all_victims, pos)] = pos
+    for pos in all_victims_pos[np.where(km.labels_ == 1)[0]]:
+        cluster2[get_id_from_pos(all_victims, pos)] = pos
+    for pos in all_victims_pos[np.where(km.labels_ == 2)[0]]:
+        cluster3[get_id_from_pos(all_victims, pos)] = pos
+    for pos in all_victims_pos[np.where(km.labels_ == 3)[0]]:
+        cluster4[get_id_from_pos(all_victims, pos)] = pos
 
-    # model = KMeans(n_clusters = 4, n_init = 10)
-    # model.fit(pos_array)
-    # predict = model.predict(pos_array)
-    # clusterizado = clean_df
-    # clusterizado['cluster'] = predict
-    #
-    # mask = clusterizado['cluster'] == 0
-    # cluster1 = clusterizado[mask]
-    # cluster2 = clusterizado[clusterizado['cluster'] == 1]
-    # cluster3 = clusterizado[clusterizado['cluster'] == 2]
-    # cluster4 = clusterizado[clusterizado['cluster'] == 3]
-    #
-    # cluster1.to_csv('cluster1.txt', index=False)
-    # cluster2.to_csv('cluster2.txt', index=False)
-    # cluster3.to_csv('cluster3.txt', index=False)
-    # cluster4.to_csv('cluster4.txt', index=False)
-
-
+    resc1.assign_victims(cluster1)
+    resc2.assign_victims(cluster2)
+    resc3.assign_victims(cluster3)
+    resc4.assign_victims(cluster4)
+    resc1.genetic_algorithm()
+    resc2.genetic_algorithm()
+    resc3.genetic_algorithm()
+    resc4.genetic_algorithm()
 
 if __name__ == '__main__':
     """ To get data from a different folder than the default called data
@@ -120,6 +143,6 @@ if __name__ == '__main__':
         data_folder_name = sys.argv[1]
     else:
         #data_folder_name = os.path.join("datasets", "data_100x80_132vic")
-        data_folder_name = os.path.join("datasets", "teste_cego")
+        data_folder_name = os.path.join("datasets", "data_100x80_225vic")
 
     main(data_folder_name)

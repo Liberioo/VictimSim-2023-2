@@ -275,9 +275,9 @@ class Env:
                 print("from env: no active or idle agent scheduled for execution... terminating")
                 victim_positions = self.print_results()
                 print("\n--------------")
-                model = KMeans(n_clusters=4, n_init=10)
-                model.fit(victim_positions)
-                self.plot_centroids(victim_positions, model)
+                # model = KMeans(n_clusters=4, n_init=10)
+                # model.fit(victim_positions)
+                # self.plot_centroids(victim_positions, model)
                 input("from env: Tecle qualquer coisa para encerrar >>")
                 running = False
 

@@ -3,6 +3,7 @@
 ### Demo of use of VictimSim
 
 import os
+import numpy as np
 import random
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
@@ -24,10 +25,14 @@ class Rescuer(AbstractAgent):
         super().__init__(env, config_file)
 
         # Specific initialization for the rescuer
+        self.mutation_rate = 0.01
+        self.generations = 1000
+        self.population_size = 50
         self.plan = []              # a list of planned actions
         self.rtime = self.TLIM      # for controlling the remaining time
         self.model = RandomForestClassifier(criterion='entropy', max_depth=40)
         self.tree = DecisionTreeClassifier(criterion='entropy', max_depth=40)
+        self.victims_assigned = {}
         
         # Starts in IDLE state.
         # It changes to ACTIVE when the map arrives
@@ -42,8 +47,79 @@ class Rescuer(AbstractAgent):
         the deliberate method is called by the environment"""
         self.body.set_state(PhysAgent.ACTIVE)
 
+    def assign_victims(self, victim_dict):
+        self.victims_assigned = victim_dict.copy()
+
+    # Function to calculate the total distance of a route
+    def calculate_distance(self, route):
+        total_distance = 0
+        for i in range(len(route) - 1):
+            victim1, victim2 = route[i], route[i + 1]
+            total_distance += np.linalg.norm(np.array(self.victims_assigned[victim1]) - np.array(self.victims_assigned[victim2]))
+        return total_distance
+
+    # Function to generate an initial population of routes
+    def generate_population(self, size):
+        population = []
+        cities_list = list(self.victims_assigned.keys())
+        for i in range(size):
+            route = random.sample(cities_list, len(cities_list))
+            population.append(route)
+        return population
+
+    # Function to select parents using tournament selection
+    def tournament_selection(self, population, k=5):
+        tournament = random.sample(population, k)
+        return min(tournament, key=self.calculate_distance)
+
+    # Function to perform crossover (order crossover)
+    def crossover(self, parent1, parent2):
+        start, end = sorted(random.sample(range(len(parent1)), 2))
+        child = [None] * len(parent1)
+        child[start:end] = parent1[start:end]
+        remaining = [city for city in parent2 if city not in child]
+        child[:start] = remaining[:start]
+        child[end:] = remaining[start:]
+        return child
+
+    # Function to perform mutation (swap mutation)
+    def mutate(self, route):
+        idx1, idx2 = sorted(random.sample(range(len(route)), 2))
+        route[idx1], route[idx2] = route[idx2], route[idx1]
+        return route
+
+    # Main genetic algorithm function
+    def genetic_algorithm(self):
+        population = self.generate_population(self.population_size)
+
+        for generation in range(self.generations):
+            population = sorted(population, key=self.calculate_distance)[:self.population_size]
+
+            new_population = []
+
+            for _ in range(self.population_size // 2):
+                parent1 = self.tournament_selection(population)
+                parent2 = self.tournament_selection(population)
+                child1 = self.crossover(parent1, parent2)
+                child2 = self.crossover(parent2, parent1)
+
+                if random.random() < self.mutation_rate:
+                    child1 = self.mutate(child1)
+                if random.random() < self.mutation_rate:
+                    child2 = self.mutate(child2)
+
+                new_population.extend([child1, child2])
+
+            population = new_population
+
+        best_route = min(population, key=self.calculate_distance)
+        best_distance = self.calculate_distance(best_route)
+
+        print("Best Route:", best_route)
+        print("Best Distance:", best_distance)
+
     #gabriel
-    def classificate(self,victims):
+    def classificate(self, victims):
 
         df = pd.DataFrame(columns=['id', 'qPA', 'pulso', 'freq_resp'])
         posistions_array_x = []
@@ -81,7 +157,7 @@ class Rescuer(AbstractAgent):
 
     def learn(self):
         col_names = ["id", "psist", "pdiast", "qPA", "pulso", "freq_resp", "gravidade", "classe"]
-        df = pd.read_csv("sinais_pesos.txt", header=None, names=col_names)
+        df = pd.read_csv("sinais_balanceados.txt", header=None, names=col_names)
         df.dropna(axis=0, inplace=True)
         print(df['classe'].value_counts)
         print('aashfdiausdsa')
@@ -105,7 +181,7 @@ class Rescuer(AbstractAgent):
         # Create the confusion matrix
         cm = confusion_matrix(y_test, y_pred)
 
-        ConfusionMatrixDisplay(confusion_matrix=cm).plot()
+        # ConfusionMatrixDisplay(confusion_matrix=cm).plot()
         accuracy = accuracy_score(y_test, y_pred)
         precision = precision_score(y_test, y_pred, average='micro')
         recall = recall_score(y_test, y_pred, average='micro')
@@ -119,7 +195,7 @@ class Rescuer(AbstractAgent):
             ascending=False)
 
         # Plot a simple bar chart
-        feature_importances.plot.bar()
+        # feature_importances.plot.bar()
     
     def __planner(self):
         """ A private method that calculates the walk actions to rescue the
